@@ -19,6 +19,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "soc/clk_tree_defs.h"
 #include "soc/timer_group_struct.h"
 #include "driver/periph_ctrl.h"
 #include "driver/timer.h"
@@ -49,8 +50,8 @@ static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 */
 static void on_timer(void *arg)
 {
-    TIMERG0.int_clr_timers.t0 = 1;
-    TIMERG0.hw_timer[TIMER_0].config.alarm_en = TIMER_ALARM_EN;
+    timer_group_clr_intr_status_in_isr(TIMER_GROUP_0, TIMER_0);
+    timer_group_enable_alarm_in_isr(TIMER_GROUP_0, TIMER_0);
     mrbc_tick();
 }
 
@@ -76,6 +77,7 @@ void hal_init(void)
   config.alarm_en = TIMER_ALARM_EN;
   config.intr_type = TIMER_INTR_LEVEL;
   config.auto_reload = TIMER_AUTORELOAD_EN;
+  config.clk_src = TIMER_SRC_CLK_DEFAULT;
 
   timer_init(TIMER_GROUP_0, TIMER_0, &config);
   timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
